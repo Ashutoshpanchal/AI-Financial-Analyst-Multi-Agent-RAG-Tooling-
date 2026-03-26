@@ -1,0 +1,142 @@
+services:
+
+  # ─────────────────────────────────────────
+  # Next.js UI
+  # ─────────────────────────────────────────
+  ui:
+    build:
+      context: ./ui
+      dockerfile_inline: |
+        FROM node:20-alpine
+        WORKDIR /app
+        COPY package.json .
+        RUN npm install
+        COPY . .
+        EXPOSE 3001
+        CMD ["npm", "run", "dev"]
+    container_name: financial_analyst_ui
+    ports:
+      - "3001:3001"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_LANGFUSE_URL=http://localhost:3000
+    depends_on:
+      - app
+    networks:
+      - analyst_network
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────
+  # FastAPI Application
+  # ─────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: financial_analyst_app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/financial_analyst
+      - LANGFUSE_HOST=http://langfuse:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app      # hot reload in dev — mounts local code
+    networks:
+      - analyst_network
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────
+  # PostgreSQL — main database + pgvector
+  # ─────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16   # includes pgvector extension for RAG (Step 5)
+    container_name: financial_analyst_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: financial_analyst
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql  # runs on first start
+    networks:
+      - analyst_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────
+  # ClickHouse — required by Langfuse
+  # ─────────────────────────────────────────
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3
+    container_name: financial_analyst_clickhouse
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+    ports:
+      - "8123:8123"   # HTTP interface
+      - "9000:9000"   # Native interface
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - analyst_network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────
+  # Langfuse — observability (Step 3)
+  # ─────────────────────────────────────────
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: financial_analyst_langfuse
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/langfuse
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:clickhouse@clickhouse:9000/default
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+      NEXTAUTH_SECRET: super-secret-nextauth-key-change-in-prod
+      NEXTAUTH_URL: http://localhost:3000
+      SALT: super-secret-salt-change-in-prod
+      TELEMETRY_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    networks:
+      - analyst_network
+    restart: unless-stopped
+
+
+# ─────────────────────────────────────────
+# Volumes — persist data across restarts
+# ─────────────────────────────────────────
+volumes:
+  postgres_data:
+  clickhouse_data:
+
+
+# ─────────────────────────────────────────
+# Network — isolated bridge network
+# ─────────────────────────────────────────
+networks:
+  analyst_network:
+    driver: bridge

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "eval_001",
+    "query": "Calculate the CAGR for a company whose revenue grew from 50 billion to 95 billion over 5 years",
+    "query_type": "computation",
+    "expected_tool": "cagr_tool",
+    "expected_contains": ["13.7", "CAGR", "%"],
+    "tags": ["computation", "cagr"]
+  },
+  {
+    "id": "eval_002",
+    "query": "What is the P/E ratio if stock price is $150 and EPS is $6?",
+    "query_type": "computation",
+    "expected_tool": "pe_ratio_tool",
+    "expected_contains": ["25", "P/E"],
+    "tags": ["computation", "pe_ratio"]
+  },
+  {
+    "id": "eval_003",
+    "query": "Calculate EBITDA: net income $10M, interest $2M, taxes $3M, depreciation $1.5M, amortization $0.5M",
+    "query_type": "computation",
+    "expected_tool": "ebitda_tool",
+    "expected_contains": ["17", "EBITDA"],
+    "tags": ["computation", "ebitda"]
+  },
+  {
+    "id": "eval_004",
+    "query": "What is the debt to equity ratio if total debt is 80 billion and equity is 40 billion?",
+    "query_type": "computation",
+    "expected_tool": "debt_to_equity_tool",
+    "expected_contains": ["2.0", "Debt"],
+    "tags": ["computation", "leverage"]
+  },
+  {
+    "id": "eval_005",
+    "query": "Calculate net profit margin with net income of 25 billion and revenue of 100 billion",
+    "query_type": "computation",
+    "expected_tool": "profit_margin_tool",
+    "expected_contains": ["25", "margin", "%"],
+    "tags": ["computation", "profitability"]
+  },
+  {
+    "id": "eval_006",
+    "query": "What is compound annual growth rate?",
+    "query_type": "general",
+    "expected_tool": null,
+    "expected_contains": ["CAGR", "growth", "annual"],
+    "tags": ["general", "definition"]
+  },
+  {
+    "id": "eval_007",
+    "query": "Explain what EBITDA measures and why it is used",
+    "query_type": "general",
+    "expected_tool": null,
+    "expected_contains": ["operating", "depreciation", "profitability"],
+    "tags": ["general", "definition"]
+  }
+]
