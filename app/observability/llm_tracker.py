@@ -23,7 +23,10 @@ from langfuse.model import ModelUsage
 from app.config.settings import get_settings
 
 settings = get_settings()
-openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+openai_client = AsyncOpenAI(
+    api_key=settings.openai_api_key,
+    base_url=settings.openai_base_url,
+)
 
 
 async def tracked_llm_call(

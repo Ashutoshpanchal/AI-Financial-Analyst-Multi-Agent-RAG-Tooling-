@@ -12,8 +12,9 @@ Writes to state:
 """
 
 from pydantic import BaseModel
+from langfuse.decorators import observe, langfuse_context
 from app.workflows.state import GraphState
-from app.models.router import get_model_router
+from app.models.router import get_model_router, TASK_MODEL_MAP
 
 
 class CriticVerdict(BaseModel):
@@ -22,8 +23,13 @@ class CriticVerdict(BaseModel):
     issues: list[str]     # specific issues found, empty if valid
 
 
+@observe(name="critic_agent", as_type="generation")
 async def critic_agent(state: GraphState) -> GraphState:
     client = get_model_router().get("critique")
+    langfuse_context.update_current_observation(
+        model=TASK_MODEL_MAP["critique"],
+        input={"query": state["query"], "final_answer": state.get("final_answer", "")},
+    )
 
     tool_results_block = (
         "\n".join(f"- {k}: {v}" for k, v in state["tool_results"].items())

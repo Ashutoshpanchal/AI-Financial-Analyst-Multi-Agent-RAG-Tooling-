@@ -95,3 +95,5 @@ class TraceContext:
             self.trace.update(output=output, status_message=status)
             # Flush ensures data is sent even in async contexts
             self.client.flush()
+
+

@@ -3,8 +3,10 @@ Router Agent — classifies query type using a cheap model (gpt-4o-mini via Mode
 """
 
 from pydantic import BaseModel
+from langfuse.decorators import observe, langfuse_context
 from app.workflows.state import GraphState, QueryType
 from app.models.router import get_model_router
+from app.models.router import TASK_MODEL_MAP
 
 
 class RouterDecision(BaseModel):
@@ -13,8 +15,13 @@ class RouterDecision(BaseModel):
     next_agent: str
 
 
+@observe(name="router_agent", as_type="generation")
 async def router_agent(state: GraphState) -> GraphState:
     client = get_model_router().get("routing")
+    langfuse_context.update_current_observation(
+        model=TASK_MODEL_MAP["routing"],
+        input={"query": state["query"]},
+    )
 
     prompt = f"""You are a financial query classifier.
 

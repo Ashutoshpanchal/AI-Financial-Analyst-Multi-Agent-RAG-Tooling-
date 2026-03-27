@@ -11,12 +11,18 @@ Writes to state:
   - final_answer
 """
 
+from langfuse.decorators import observe, langfuse_context
 from app.workflows.state import GraphState
-from app.models.router import get_model_router
+from app.models.router import get_model_router, TASK_MODEL_MAP
 
 
+@observe(name="aggregator_agent", as_type="generation")
 async def aggregator_agent(state: GraphState) -> GraphState:
     client = get_model_router().get("aggregation")
+    langfuse_context.update_current_observation(
+        model=TASK_MODEL_MAP["aggregation"],
+        input={"query": state["query"]},
+    )
 
     # Build a rich context block from all available results
     sections = []
@@ -53,7 +59,7 @@ Instructions:
 
     try:
         answer = await client.complete(
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
         )
         return {**state, "final_answer": answer}
     except Exception as e:

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageSquare, FileText, FlaskConical, Wrench, TrendingUp } from "lucide-react";
+import { MessageSquare, FileText, FlaskConical, Wrench, TrendingUp, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/chat",      label: "Chat",      icon: MessageSquare, desc: "Ask financial questions" },
+  { href: "/search",    label: "Search",    icon: Search,         desc: "Live company data" },
   { href: "/documents", label: "Documents", icon: FileText,       desc: "Upload PDF / CSV" },
   { href: "/eval",      label: "Evaluation",icon: FlaskConical,   desc: "Test accuracy" },
   { href: "/mcp",       label: "MCP Tools", icon: Wrench,         desc: "Tool registry" },

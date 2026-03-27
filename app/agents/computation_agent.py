@@ -4,15 +4,18 @@ Computation Agent — uses ModelRouter to get the right LLM, then calls financia
 
 from langgraph.prebuilt import ToolNode
 from langchain_core.messages import HumanMessage, ToolMessage
+from langfuse.decorators import observe, langfuse_context
 from app.workflows.state import GraphState
 from app.tools.registry import FINANCIAL_TOOLS
-from app.models.router import get_model_router
+from app.models.router import get_model_router, TASK_MODEL_MAP
 
 tool_node = ToolNode(FINANCIAL_TOOLS)
 
 
+@observe(name="computation_agent", as_type="generation")
 async def computation_agent(state: GraphState) -> GraphState:
     router = get_model_router()
+    langfuse_context.update_current_observation(model=TASK_MODEL_MAP["computation"])
     llm = router.get("computation")._llm.bind_tools(FINANCIAL_TOOLS)
 
     system_prompt = """You are a financial calculation assistant.

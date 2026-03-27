@@ -25,17 +25,17 @@ from app.models.local_client import LocalLLMClient
 from app.config.settings import get_settings
 
 settings = get_settings()
-
+model_name ='meta/llama-4-maverick-17b-128e-instruct'
 
 # Task → model name mapping (easy to change without touching agent code)
 TASK_MODEL_MAP: dict[str, str] = {
-    "routing":       "gpt-4o-mini",
-    "planning":      "gpt-4o",
-    "rag_synthesis": "gpt-4o",
-    "computation":   "gpt-4o",
-    "aggregation":   "gpt-4o",
-    "critique":      "gpt-4o",
-    "simple":        "gpt-4o-mini",
+    "routing":       model_name,
+    "planning":      model_name,
+    "rag_synthesis": model_name,
+    "computation":   model_name,
+    "aggregation":   model_name,
+    "critique":      model_name,
+    "simple":        model_name,
     "local":         "local",
 }
 
@@ -60,6 +60,7 @@ class ModelRouter:
             model_name = "gpt-4o-mini"
 
         return OpenAIClient(model=model_name)
+
 
     def get_with_fallback(self, task: str, fallback_task: str = "simple") -> BaseLLMClient:
         """

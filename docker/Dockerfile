@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
@@ -12,11 +12,11 @@ RUN uv venv .venv
 RUN uv pip install --python .venv/bin/python \
     fastapi uvicorn[standard] pydantic pydantic-settings \
     python-dotenv httpx sqlalchemy[asyncio] asyncpg \
-    alembic python-multipart langfuse openai \
-    langgraph langchain-openai langchain-community \
+    alembic python-multipart "langfuse>=2.0.0,<3.0.0" openai \
+    langgraph langchain langchain-openai langchain-community \
     langchain-text-splitters langchain-core \
     pgvector pypdf pandas \
-    mcp fastmcp
+    mcp flashrank yfinance
 
 COPY app/ ./app/
 COPY run.py .

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, CheckCircle, XCircle, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
-import { analyze, type AnalysisResult } from "@/lib/api";
+import { Send, Loader2, CheckCircle, XCircle, ChevronDown, ChevronRight, ExternalLink, Wrench } from "lucide-react";
+import { analyze, getMCPStatus, type AnalysisResult } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const QUERY_TYPE_COLORS: Record<string, string> = {
@@ -13,11 +13,11 @@ const QUERY_TYPE_COLORS: Record<string, string> = {
 };
 
 const EXAMPLE_QUERIES = [
+  "Get live stock data for AAPL and calculate its profit margin",
   "Calculate CAGR for revenue that grew from $50B to $95B over 5 years",
   "What is the P/E ratio if stock price is $150 and EPS is $6?",
   "Calculate EBITDA: net income $10M, interest $2M, taxes $3M, depreciation $1.5M, amortization $0.5M",
   "What is debt-to-equity if total debt is $80B and equity is $40B?",
-  "Explain what EBITDA measures and why investors use it",
 ];
 
 interface Message {
@@ -175,11 +175,18 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mcpTools, setMcpTools] = useState<{ name: string; description: string }[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    getMCPStatus()
+      .then((s) => setMcpTools(s.tools || []))
+      .catch(() => {});
+  }, []);
 
   async function sendMessage(query: string) {
     if (!query.trim() || loading) return;
@@ -216,8 +223,29 @@ export default function ChatPage() {
     <div className="flex flex-col h-screen">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-800">
-        <h1 className="text-lg font-semibold">Financial Analyst</h1>
-        <p className="text-xs text-gray-500">Multi-agent RAG · powered by LangGraph</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-lg font-semibold">Financial Analyst</h1>
+            <p className="text-xs text-gray-500">Multi-agent RAG · powered by LangGraph</p>
+          </div>
+          {mcpTools.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap justify-end max-w-sm">
+              <span className="flex items-center gap-1 text-xs text-gray-500 shrink-0">
+                <Wrench className="w-3 h-3 text-purple-400" />
+                MCP:
+              </span>
+              {mcpTools.map((t) => (
+                <span
+                  key={t.name}
+                  title={t.description}
+                  className="text-xs font-mono bg-purple-900/20 text-purple-400 border border-purple-800/40 rounded px-1.5 py-0.5"
+                >
+                  {t.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Messages */}
@@ -227,6 +255,11 @@ export default function ChatPage() {
             <div>
               <p className="text-gray-400 text-sm mb-1">Ask a financial question or try an example</p>
               <p className="text-gray-600 text-xs">Upload documents in the Documents tab to enable RAG queries</p>
+              {mcpTools.length > 0 && (
+                <p className="text-gray-600 text-xs mt-1">
+                  {mcpTools.length} MCP tool{mcpTools.length > 1 ? "s" : ""} available · try asking for live stock data
+                </p>
+              )}
             </div>
             <div className="grid gap-2 w-full max-w-lg">
               {EXAMPLE_QUERIES.map((q) => (

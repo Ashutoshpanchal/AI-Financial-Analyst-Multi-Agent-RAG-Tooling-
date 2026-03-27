@@ -8,3 +8,8 @@ __pycache__
 data/
 tests/
 *.md
+app/__pycache__
+app/mcp/__pycache__
+app/agents/__pycache__
+app/models/__pycache__
+app/workflows/__pycache__

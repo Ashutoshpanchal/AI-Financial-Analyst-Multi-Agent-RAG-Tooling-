@@ -28,7 +28,8 @@ What is exposed:
     - financial_analysis    ← structured prompt for financial queries
 """
 
-from fastmcp import FastMCP
+import yfinance as yf
+from mcp.server.fastmcp import FastMCP
 from app.tools.financial_metrics import (
     calculate_pe_ratio,
     calculate_cagr,
@@ -214,6 +215,65 @@ async def analyze_query(query: str, user_id: str = "mcp_user") -> str:
 
     except Exception as e:
         return f"Analysis failed: {str(e)}"
+
+
+@mcp.tool()
+def get_stock_data(ticker: str) -> str:
+    """
+    Fetch live stock data for a ticker symbol using Yahoo Finance.
+    Returns current price, P/E ratio, EPS, market cap, revenue, and more.
+    No API key required — uses yfinance (free).
+
+    Args:
+        ticker: Stock ticker symbol (e.g. "AAPL", "TSLA", "MSFT", "NVDA")
+    """
+    try:
+        stock = yf.Ticker(ticker.upper())
+        info = stock.info
+
+        # Core fields — yfinance may return None for some
+        price          = info.get("currentPrice") or info.get("regularMarketPrice")
+        pe_ratio       = info.get("trailingPE")
+        eps            = info.get("trailingEps")
+        market_cap     = info.get("marketCap")
+        revenue        = info.get("totalRevenue")
+        net_income     = info.get("netIncomeToCommon")
+        debt           = info.get("totalDebt")
+        equity         = info.get("stockholdersEquity") or info.get("bookValue")
+        company_name   = info.get("longName") or ticker.upper()
+        sector         = info.get("sector", "N/A")
+        week_52_high   = info.get("fiftyTwoWeekHigh")
+        week_52_low    = info.get("fiftyTwoWeekLow")
+
+        def fmt_number(n, prefix="$"):
+            if n is None:
+                return "N/A"
+            if abs(n) >= 1e12:
+                return f"{prefix}{n/1e12:.2f}T"
+            if abs(n) >= 1e9:
+                return f"{prefix}{n/1e9:.2f}B"
+            if abs(n) >= 1e6:
+                return f"{prefix}{n/1e6:.2f}M"
+            return f"{prefix}{n:,.2f}"
+
+        lines = [
+            f"**{company_name} ({ticker.upper()})** — {sector}",
+            f"",
+            f"Price:        {fmt_number(price)}",
+            f"52-week:      {fmt_number(week_52_low)} – {fmt_number(week_52_high)}",
+            f"Market Cap:   {fmt_number(market_cap)}",
+            f"",
+            f"P/E Ratio:    {f'{pe_ratio:.2f}' if pe_ratio else 'N/A'}",
+            f"EPS:          {fmt_number(eps, '$')}",
+            f"Revenue:      {fmt_number(revenue)}",
+            f"Net Income:   {fmt_number(net_income)}",
+            f"Total Debt:   {fmt_number(debt)}",
+            f"Equity:       {fmt_number(equity)}",
+        ]
+        return "\n".join(lines)
+
+    except Exception as e:
+        return f"Could not fetch data for '{ticker}': {str(e)}"
 
 
 # ── Resources ─────────────────────────────────────────────────────────────────

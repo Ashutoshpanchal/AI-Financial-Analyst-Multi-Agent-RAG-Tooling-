@@ -3,8 +3,9 @@ Planner Agent — produces a step-by-step execution plan using gpt-4o via ModelR
 """
 
 from pydantic import BaseModel
+from langfuse.decorators import observe, langfuse_context
 from app.workflows.state import GraphState
-from app.models.router import get_model_router
+from app.models.router import get_model_router, TASK_MODEL_MAP
 
 
 class PlannerDecision(BaseModel):
@@ -12,8 +13,13 @@ class PlannerDecision(BaseModel):
     steps: list[str]
 
 
+@observe(name="planner_agent", as_type="generation")
 async def planner_agent(state: GraphState) -> GraphState:
     client = get_model_router().get("planning")
+    langfuse_context.update_current_observation(
+        model=TASK_MODEL_MAP["planning"],
+        input={"query": state["query"], "query_type": state.get("query_type")},
+    )
 
     context_parts = []
     if state.get("retrieved_context"):

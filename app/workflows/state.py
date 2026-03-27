@@ -43,6 +43,9 @@ class GraphState(TypedDict):
     # ── Computation output (Step 6) ─────────────────────
     tool_results: dict                  # results from financial tools
 
+    # ── MCP Enrichment output ───────────────────────────
+    mcp_enrichment: dict                # MCP tool calls made + results (for tracing)
+
     # ── Final output (Step 8) ───────────────────────────
     final_answer: str | None            # assembled answer
     is_valid: bool | None               # critic verdict

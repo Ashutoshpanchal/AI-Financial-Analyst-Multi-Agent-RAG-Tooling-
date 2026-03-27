@@ -97,3 +97,57 @@ export async function getHealth(): Promise<{ status: string; environment: string
   if (!res.ok) throw new Error("Health check failed");
   return res.json();
 }
+
+export interface StockSearchResult {
+  symbol: string;
+  name: string;
+  exchange: string;
+  type: string;
+}
+
+export interface StockData {
+  symbol: string;
+  name: string | null;
+  sector: string | null;
+  industry: string | null;
+  country: string | null;
+  website: string | null;
+  description: string | null;
+  price: number | null;
+  prev_close: number | null;
+  open: number | null;
+  day_low: number | null;
+  day_high: number | null;
+  week_52_low: number | null;
+  week_52_high: number | null;
+  market_cap: number | null;
+  pe_ratio: number | null;
+  forward_pe: number | null;
+  eps: number | null;
+  price_to_book: number | null;
+  revenue: number | null;
+  net_income: number | null;
+  total_debt: number | null;
+  total_cash: number | null;
+  ebitda: number | null;
+  gross_margins: number | null;
+  profit_margins: number | null;
+  dividend_yield: number | null;
+  dividend_rate: number | null;
+  beta: number | null;
+  shares_outstanding: number | null;
+  avg_volume: number | null;
+  volume: number | null;
+}
+
+export async function searchStocks(q: string): Promise<StockSearchResult[]> {
+  const res = await fetch(`${BASE}/api/v1/stock/search?q=${encodeURIComponent(q)}`);
+  if (!res.ok) throw new Error("Search failed");
+  return res.json();
+}
+
+export async function getStockData(ticker: string): Promise<StockData> {
+  const res = await fetch(`${BASE}/api/v1/stock/${encodeURIComponent(ticker)}`);
+  if (!res.ok) throw new Error(`Failed to fetch data for ${ticker}`);
+  return res.json();
+}

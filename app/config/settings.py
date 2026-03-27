@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     app_port: int = 8000
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/financial_analyst"
+    database_url: str = ""
 
     # OpenAI
     openai_api_key: str = ""

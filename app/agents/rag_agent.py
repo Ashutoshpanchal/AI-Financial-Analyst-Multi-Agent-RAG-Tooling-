@@ -14,6 +14,7 @@ Key concept (why separate retrieval from answering?):
 """
 
 from langchain_openai import ChatOpenAI
+from langfuse.decorators import observe
 from app.workflows.state import GraphState
 from app.rag.retriever import retrieve
 from app.db.session import AsyncSessionLocal
@@ -22,6 +23,7 @@ from app.config.settings import get_settings
 settings = get_settings()
 
 
+@observe(name="rag_agent")
 async def rag_agent(state: GraphState) -> GraphState:
     """
     LangGraph node — retrieves document context for the query.
