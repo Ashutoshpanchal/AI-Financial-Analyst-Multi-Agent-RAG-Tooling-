@@ -39,12 +39,27 @@ async def critic_agent(state: GraphState) -> GraphState:
 
     doc_context_block = state.get("retrieved_context") or "No document context."
 
+    live_block = "No live market data."
+    if state.get("live_stock_data"):
+        live = state["live_stock_data"]
+        live_block = "\n".join(
+            f"- {k}: {v}" for k, v in live.items() if v is not None
+        )
+
+    comparison_block = state.get("data_comparison", {}).get("summary", "No comparison available.")
+
     prompt = f"""You are a financial analysis critic. Validate this answer strictly.
 
 **Original Query:** {state["query"]}
 
 **Tool Calculation Results (ground truth):**
 {tool_results_block}
+
+**Live Market Data from Yahoo Finance (ground truth):**
+{live_block}
+
+**Document vs Live Comparison:**
+{comparison_block}
 
 **Document Context Used:**
 {doc_context_block[:2000]}
@@ -53,10 +68,11 @@ async def critic_agent(state: GraphState) -> GraphState:
 {state.get("final_answer", "")}
 
 Check for:
-1. Any numbers in the answer that don't match the tool results
-2. Any factual claims not supported by document context
+1. Any numbers in the answer that don't match tool results OR live market data
+2. Any factual claims not supported by document context or live data
 3. Logical errors or contradictions
 4. Hallucinated company names, dates, or figures
+5. If answer mixes live and historical data without clearly stating the source/period
 
 Return:
 - is_valid: true only if the answer has no significant issues

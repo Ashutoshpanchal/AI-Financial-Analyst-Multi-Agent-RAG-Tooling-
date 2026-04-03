@@ -25,6 +25,12 @@ class Settings(BaseSettings):
 
     # OpenAI
     openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
+
+    # Embeddings
+    embedding_api_key: str = ""
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dimensions: int = 1536
 
     # Langfuse
     langfuse_secret_key: str = ""
@@ -35,6 +41,11 @@ class Settings(BaseSettings):
     local_llm_enabled: bool = False
     local_llm_model: str = "llama3.2"
     local_llm_base_url: str = "http://localhost:11434/v1"
+
+    # Redis — FAQ cache
+    redis_url: str = "redis://localhost:6379/0"
+    cache_enabled: bool = True
+    cache_ttl_seconds: int = 3600          # 1 hour default
 
     @property
     def is_production(self) -> bool:

@@ -12,7 +12,7 @@ from app.config.settings import get_settings
 settings = get_settings()
 
 _client = AsyncOpenAI(
-    api_key=settings.embedding_api_key or settings.openai_api_key,
+    api_key=settings.embedding_api_key or settings.openai_api_key or "no-key",
     base_url=settings.openai_base_url,
 )
 

@@ -46,6 +46,11 @@ class GraphState(TypedDict):
     # ── MCP Enrichment output ───────────────────────────
     mcp_enrichment: dict                # MCP tool calls made + results (for tracing)
 
+    # ── yFinance live data ───────────────────────────────
+    ticker: str | None                  # detected ticker symbol (e.g. "AAPL")
+    live_stock_data: dict | None        # raw yfinance data for the ticker
+    data_comparison: dict | None        # diff between live data vs document data
+
     # ── Final output (Step 8) ───────────────────────────
     final_answer: str | None            # assembled answer
     is_valid: bool | None               # critic verdict
