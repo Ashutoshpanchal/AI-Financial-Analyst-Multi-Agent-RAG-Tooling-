@@ -9,14 +9,7 @@ RUN pip install uv
 COPY pyproject.toml .
 
 RUN uv venv .venv
-RUN uv pip install --python .venv/bin/python \
-    fastapi uvicorn[standard] pydantic pydantic-settings \
-    python-dotenv httpx sqlalchemy[asyncio] asyncpg \
-    alembic python-multipart "langfuse>=2.0.0,<3.0.0" openai \
-    langgraph langchain langchain-openai langchain-community \
-    langchain-text-splitters langchain-core \
-    pgvector pypdf pandas \
-    mcp flashrank yfinance
+RUN uv pip install --python .venv/bin/python -e .
 
 COPY app/ ./app/
 COPY run.py .
