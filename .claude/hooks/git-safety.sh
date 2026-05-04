@@ -12,29 +12,44 @@ if ! echo "$COMMAND" | grep -qE "^git (add|commit|push)"; then
   exit 0
 fi
 
-# Get staged files
-STAGED=$(git -C "$(cd "$(dirname "$0")/../.." && pwd)" diff --cached --name-only 2>/dev/null)
-
-if [ -z "$STAGED" ]; then
-  exit 0
-fi
-
 BLOCKED_PATTERNS=(".env" ".env.local" "__pycache__" ".DS_Store" "node_modules" ".next" "graphify-out")
 FOUND_ISSUES=""
 
-while IFS= read -r FILE; do
-  for PATTERN in "${BLOCKED_PATTERNS[@]}"; do
-    if echo "$FILE" | grep -q "$PATTERN"; then
-      FOUND_ISSUES="$FOUND_ISSUES\n  BLOCKED: $FILE (matches '$PATTERN')"
-    fi
-  done
-done <<< "$STAGED"
+# Check 1: inspect the command string itself for sensitive file patterns
+# Catches: git add .env, git add -f .env, etc.
+if echo "$COMMAND" | grep -qE "^git add"; then
+  # Extract everything after "git add" and split on spaces
+  ARGS=$(echo "$COMMAND" | sed 's/^git add[[:space:]]*//' | tr ' ' '\n')
+  while IFS= read -r ARG; do
+    # Skip flags like -f, -A, --all
+    [[ "$ARG" == -* ]] && continue
+    for PATTERN in "${BLOCKED_PATTERNS[@]}"; do
+      if echo "$ARG" | grep -q "$PATTERN"; then
+        FOUND_ISSUES="$FOUND_ISSUES\n  BLOCKED (command): $ARG (matches '$PATTERN')"
+      fi
+    done
+  done <<< "$ARGS"
+fi
+
+# Check 2: inspect already-staged files (catches multi-step staging)
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+STAGED=$(git -C "$PROJECT_ROOT" diff --cached --name-only 2>/dev/null)
+
+if [ -n "$STAGED" ]; then
+  while IFS= read -r FILE; do
+    for PATTERN in "${BLOCKED_PATTERNS[@]}"; do
+      if echo "$FILE" | grep -q "$PATTERN"; then
+        FOUND_ISSUES="$FOUND_ISSUES\n  BLOCKED (staged): $FILE (matches '$PATTERN')"
+      fi
+    done
+  done <<< "$STAGED"
+fi
 
 if [ -n "$FOUND_ISSUES" ]; then
-  echo "Git safety guard: sensitive or cache files are staged."
+  echo "Git safety guard: sensitive or cache files detected."
   printf "%b\n" "$FOUND_ISSUES"
   echo ""
-  echo "Remove them with: git restore --staged <file>"
+  echo "Remove staged files with: git restore --staged <file>"
   echo "Add to .gitignore if this keeps happening."
   exit 1
 fi
