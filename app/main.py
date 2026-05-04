@@ -1,14 +1,15 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config.settings import get_settings
 from app.api.v1 import api_v1_router
+from app.config.settings import get_settings
 from app.core.exceptions import AppException, app_exception_handler
-from app.observability.middleware import LangfuseMiddleware
-from app.db.session import engine, Base
 from app.db import models  # noqa: F401 — registers ORM models with Base
+from app.db.session import Base, engine
 from app.mcp.transport import mount_mcp
+from app.observability.middleware import LangfuseMiddleware
 
 settings = get_settings()
 
@@ -40,7 +41,9 @@ def create_app() -> FastAPI:
     # CORS — open in dev, restrict in production
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"] if not settings.is_production else ["https://yourdomain.com"],
+        allow_origins=["*"]
+        if not settings.is_production
+        else ["https://yourdomain.com"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

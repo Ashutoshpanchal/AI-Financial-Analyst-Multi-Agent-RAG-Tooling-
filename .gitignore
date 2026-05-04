@@ -29,3 +29,9 @@ ui/node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# graphify
+graphify-out/graph.html
+graphify-out/graph.json
+graphify-out/cache/
+graphify-out/.graphify_python
